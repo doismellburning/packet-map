@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<base target="_top">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>UK Packet/APRS/Pager NoVs</title>
+
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+	<script src="https://unpkg.com/leaflet-simplestyle"></script>
+	<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+
+		.leaflet-container {
+			height: 100%;
+			width: 100%;
+			max-width: 100%;
+			max-height: 100%;
+		}
+	</style>
+
+
+</head>
+<body>
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+		<div class="container">
+			<a class="navbar-brand" href="/">ETCC NoV Maps</a>
+		</div>
+	</nav>
+
+	<div id='map'></div>
+
+	<script>
+		const map = L.map('map').setView([54.5, -3], 7);
+
+		const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 19,
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+		}).addTo(map);
+
+
+		let baseRequest = fetch('https://raw.githubusercontent.com/doismellburning/etcc-csv-scrape/main/packetlist.json')
+			.then(response => response.json());
+
+		let augmentRequest = fetch('augments.yaml')
+			.then(response => response.text());
+
+		Promise.all([baseRequest, augmentRequest])
+			.then(responses => {
+				let points = responses[0];
+				let augments = responses[1];
+				augments = jsyaml.load(augments);
+				augments = augments["augments"];
+
+				// For each point, if there's a corresponding callsign entry in augments, merge the properties
+				points["features"].forEach((element, index, arr) => {
+					let callsign = element["properties"]["callsign"];
+					if (augments[callsign]) {
+						arr[index]["properties"] = Object.assign({}, element["properties"], augments[callsign]["properties"]);
+					}
+				});
+
+				L.geoJSON(points, {
+					useSimpleStyle: true,
+					useMakiMarkers: true,
+					onEachFeature: function (f, l) {
+						l.bindPopup('<pre>' + JSON.stringify(f.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
+					}
+				}).addTo(map);
+			})
+
+	</script>
+
+
+
+</body>
+</html>

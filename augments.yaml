@@ -1,0 +1,4 @@
+augments:
+  MB7NGP:
+    properties:
+      lorem: "ipsum"
