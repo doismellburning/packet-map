@@ -49,10 +49,16 @@
 		}).addTo(map);
 
 
-		fetch('https://raw.githubusercontent.com/doismellburning/etcc-csv-scrape/main/packetlist.json')
-			.then(response => response.json())
-			.then(response => {
-				L.geoJSON(response, {
+		let baseRequest = fetch('https://raw.githubusercontent.com/doismellburning/etcc-csv-scrape/main/packetlist.json')
+			.then(response => response.json());
+
+		let augmentRequest = fetch('augment.json')
+			.then(response => response.json());
+
+		Promise.all([baseRequest, augmentRequest])
+			.then(responses => {
+				points = responses[0];
+				L.geoJSON(points, {
 					useSimpleStyle: true,
 					useMakiMarkers: true,
 					onEachFeature: function (f, l) {
