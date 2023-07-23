@@ -19,20 +19,63 @@ Promise.all([baseRequest, augmentRequest])
 		augments = jsyaml.load(augments);
 		augments = augments["augments"];
 
+		let bands = new Set();
+
 		// For each point, if there's a corresponding callsign entry in augments, merge the properties
+		// Also populate the bands set!
 		points["features"].forEach((element, index, arr) => {
 			let callsign = element["properties"]["callsign"];
 			if (augments[callsign]) {
 				arr[index]["properties"] = Object.assign({}, element["properties"], augments[callsign]["properties"]);
 			}
+			bands.add(arr[index]["properties"]["band"]);
 		});
 
-		L.geoJSON(points, {
+		let markerLayer = L.geoJSON(points, {
 			useSimpleStyle: true,
 			useMakiMarkers: true,
 			onEachFeature: function (f, l) {
 				l.bindPopup('<pre>' + JSON.stringify(f.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
 			}
-		}).addTo(map);
+		})
+		markerLayer.addTo(map);
+
+		let filterControl = L.control({
+			position: "bottomright",
+		});
+
+		filterControl.onAdd = function(map) {
+			let div = L.DomUtil.create("div", "filter");
+			let html = "<h3>Filter</h3>";
+			bands.forEach(function (band) {
+				html += `<label><input type="checkbox" name="${band}" value="${band}" checked>${band}</label><br>`;
+			});
+			div.innerHTML = html;
+			return div;
+		}
+
+		filterControl.addTo(map);
+
+		function filterMarkers() {
+			let checkboxes = document.querySelectorAll("input[type='checkbox']");
+			checkboxes.forEach(function (checkbox) {
+				let markerBand = checkbox.value;
+				let isChecked = checkbox.checked;
+
+				let markers = markerLayer.getLayers().filter(function (layer) {
+					return layer.feature.properties.band === markerBand;
+				});
+
+				markers.forEach(function (marker) {
+					isChecked ? map.addLayer(marker) : map.removeLayer(marker);
+				});
+			});
+		}
+
+		document.querySelectorAll("input[type='checkbox']").forEach(function (checkbox) {
+			checkbox.addEventListener("change", filterMarkers);
+		});
+
+		filterMarkers();
 	})
 
