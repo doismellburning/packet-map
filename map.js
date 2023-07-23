@@ -38,5 +38,21 @@ Promise.all([baseRequest, augmentRequest])
 				l.bindPopup('<pre>' + JSON.stringify(f.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
 			}
 		}).addTo(map);
+
+		let filterControl = L.control({
+			position: "bottomright",
+		});
+
+		filterControl.onAdd = function(map) {
+			let div = L.DomUtil.create("div", "filter");
+			let html = "<h3>Filter</h3>";
+			bands.forEach(function (band) {
+				html += "<p>" + band + "</p>";
+			});
+			div.innerHTML = html;
+			return div;
+		}
+
+		filterControl.addTo(map);
 	})
 
