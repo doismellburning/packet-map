@@ -31,13 +31,14 @@ Promise.all([baseRequest, augmentRequest])
 			bands.add(arr[index]["properties"]["band"]);
 		});
 
-		L.geoJSON(points, {
+		let markerLayer = L.geoJSON(points, {
 			useSimpleStyle: true,
 			useMakiMarkers: true,
 			onEachFeature: function (f, l) {
 				l.bindPopup('<pre>' + JSON.stringify(f.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
 			}
-		}).addTo(map);
+		})
+		markerLayer.addTo(map);
 
 		let filterControl = L.control({
 			position: "bottomright",
@@ -54,5 +55,27 @@ Promise.all([baseRequest, augmentRequest])
 		}
 
 		filterControl.addTo(map);
+
+		function filterMarkers() {
+			let checkboxes = document.querySelectorAll("input[type='checkbox']");
+			checkboxes.forEach(function (checkbox) {
+				let markerBand = checkbox.value;
+				let isChecked = checkbox.checked;
+
+				let markers = markerLayer.getLayers().filter(function (layer) {
+					return layer.feature.properties.band === markerBand;
+				});
+
+				markers.forEach(function (marker) {
+					isChecked ? map.addLayer(marker) : map.removeLayer(marker);
+				});
+			});
+		}
+
+		document.querySelectorAll("input[type='checkbox']").forEach(function (checkbox) {
+			checkbox.addEventListener("change", filterMarkers);
+		});
+
+		filterMarkers();
 	})
 
