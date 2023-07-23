@@ -32,22 +32,24 @@ Promise.all([baseRequest, augmentRequest])
 		});
 
 		bands = Array.from(bands).sort(function (a, b) {
-			let regex = /^(\d+)(\s+)$/;
+			let regex = /^(\d+)(\w+)$/;
 			let aMatch = a.match(regex);
 			let bMatch = b.match(regex);
 
 			// If we can't parse one, that's something like "OTHER", put it at the end
 			if (!aMatch) {
-				return -1;
-			}
-			if (!bMatch) {
 				return 1;
 			}
+			if (!bMatch) {
+				return -1;
+			}
 
-			aNum = parseInt(aMatch[0]);
-			aUnit = aMatch[1];
-			bNum = parseInt(bMatch[0]);
-			bUnit = bMatch[1];
+			aNum = parseInt(aMatch[1]);
+			aUnit = aMatch[2];
+			bNum = parseInt(bMatch[1]);
+			bUnit = bMatch[2];
+
+			//console.log(`${aNum} / ${aUnit} / ${bNum} / ${bUnit}`);
 
 			if (aUnit < bUnit) {
 				return -1;
