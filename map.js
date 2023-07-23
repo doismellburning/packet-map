@@ -47,7 +47,7 @@ Promise.all([baseRequest, augmentRequest])
 			let div = L.DomUtil.create("div", "filter");
 			let html = "<h3>Filter</h3>";
 			bands.forEach(function (band) {
-				html += "<p>" + band + "</p>";
+				html += `<label><input type="checkbox" name="${band}" value="${band}" checked>${band}</label><br>`;
 			});
 			div.innerHTML = html;
 			return div;
