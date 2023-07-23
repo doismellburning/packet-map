@@ -19,12 +19,16 @@ Promise.all([baseRequest, augmentRequest])
 		augments = jsyaml.load(augments);
 		augments = augments["augments"];
 
+		let bands = new Set();
+
 		// For each point, if there's a corresponding callsign entry in augments, merge the properties
+		// Also populate the bands set!
 		points["features"].forEach((element, index, arr) => {
 			let callsign = element["properties"]["callsign"];
 			if (augments[callsign]) {
 				arr[index]["properties"] = Object.assign({}, element["properties"], augments[callsign]["properties"]);
 			}
+			bands.add(arr[index]["properties"]["band"]);
 		});
 
 		L.geoJSON(points, {
